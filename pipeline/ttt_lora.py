@@ -119,6 +119,9 @@ def setup_model_and_tokenizer(model_name, load_in_4bit=True):
 
 def fine_tune_model(model, tokenizer, dataset, output_dir="output"):
     """Fine-tune model using LoRA"""
+    import wandb
+    wandb.login(key=args.wandb_key)
+                
     peft_config = LoraConfig(
         task_type="CAUSAL_LM",
         inference_mode=False,
@@ -135,7 +138,10 @@ def fine_tune_model(model, tokenizer, dataset, output_dir="output"):
         gradient_accumulation_steps=16,
         learning_rate=3e-4,
         logging_steps=10,
-        save_strategy="no"
+        save_strategy="no",
+        report_to="wandb",
+        run_name="ttt-lora",
+        project_name="llama-qa-finetuning-lora"
     )
 
     peft_model = get_peft_model(model, peft_config)
@@ -150,6 +156,7 @@ def fine_tune_model(model, tokenizer, dataset, output_dir="output"):
     )
     
     trainer.train()
+    wandb.finish()
     return peft_model
 
 def query_model(prompt, model, tokenizer, temperature=0.1, max_new_tokens=512):
@@ -220,11 +227,9 @@ def main():
     parser.add_argument('--hf_token', type=str, required=True, help='Hugging Face login token')
     parser.add_argument('--model_name', type=str, default="meta-llama/Llama-2-7b-hf", help='Model name')
     parser.add_argument('--input_files', nargs='+', help='Specific input files to process')
+    parser.add_argument('--wandb_key', type=str, required=True, help='Weights & Biases API key')
     
     args = parser.parse_args()
-
-    # Clone repository
-    os.system("git clone https://github.com/vlgiitr/ttt-icl-math.git")
     
     # Set up CUDA
     torch.set_default_dtype(torch.float16)
@@ -237,7 +242,7 @@ def main():
     print("Model and tokenizer loaded successfully!")
 
     # Process specified input files
-    input_dir = Path('input_data')
+    input_dir = Path(__file__).parent.parent / "input_data" 
     if args.input_files:
         json_files = [input_dir / filename for filename in args.input_files]
     else:
