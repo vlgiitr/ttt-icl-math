@@ -21,3 +21,7 @@ dependencies:
     - safetensors==0.4.1
     - scipy==1.11.4
     - datasets==3.2.0
+    - optimum
+    - peft
+    - evaluate
+    - trl==0.12.0
