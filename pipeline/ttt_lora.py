@@ -117,10 +117,10 @@ def setup_model_and_tokenizer(model_name, load_in_4bit=True):
     
     return model, tokenizer
 
-def fine_tune_model(model, tokenizer, dataset, output_dir="output"):
+def fine_tune_model(model, tokenizer, dataset, wandb_key, output_dir="output"):
     """Fine-tune model using LoRA"""
     import wandb
-    wandb.login(key=args.wandb_key)
+    wandb.login(key=wandb_key)
                 
     peft_config = LoraConfig(
         task_type="CAUSAL_LM",
@@ -141,7 +141,7 @@ def fine_tune_model(model, tokenizer, dataset, output_dir="output"):
         save_strategy="no",
         report_to="wandb",
         run_name="ttt-lora",
-        project_name="llama-qa-finetuning-lora"
+        project="llama-qa-finetuning-lora"
     )
 
     peft_model = get_peft_model(model, peft_config)
@@ -192,13 +192,13 @@ def query_model(prompt, model, tokenizer, temperature=0.1, max_new_tokens=512):
 
     return tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
-def process_single_query(query_data, base_model, tokenizer, output_dir):
+def process_single_query(query_data, base_model, wandb_key, tokenizer, output_dir):
     """Process a single query with fine-tuning and inference"""
     # Prepare training data
     dataset = prepare_training_data(query_data)
     
     # Fine-tune model
-    fine_tuned_model = fine_tune_model(base_model, tokenizer, dataset, output_dir)
+    fine_tuned_model = fine_tune_model(base_model, tokenizer, wandb_key, dataset, output_dir)
     
     # Prepare inference prompt
     prompt = f"Answer the following question: {query_data['query']}"
@@ -269,7 +269,7 @@ def main():
         
         # Process each query in the file
         for d in tqdm(doc_data, desc=f"Processing queries in {input_file.name}"):
-            result = process_single_query(d, base_model, tokenizer, "output")
+            result = process_single_query(d, base_model, tokenizer, args.wandb_key, "output")
             save_list.append(result)
         
         # Save results
