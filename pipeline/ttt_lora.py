@@ -192,13 +192,13 @@ def query_model(prompt, model, tokenizer, temperature=0.1, max_new_tokens=512):
 
     return tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
-def process_single_query(query_data, base_model, wandb_key, tokenizer, output_dir):
+def process_single_query(query_data, base_model, tokenizer, wandb_key, output_dir):
     """Process a single query with fine-tuning and inference"""
     # Prepare training data
     dataset = prepare_training_data(query_data)
     
     # Fine-tune model
-    fine_tuned_model = fine_tune_model(base_model, tokenizer, wandb_key, dataset, output_dir)
+    fine_tuned_model = fine_tune_model(base_model, tokenizer, dataset, wandb_key, output_dir)
     
     # Prepare inference prompt
     prompt = f"Answer the following question: {query_data['query']}"
